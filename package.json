@@ -1,0 +1,42 @@
+{
+  "name": "crispy-v3-backend",
+  "version": "1.0.0",
+  "description": "Backend development for crispy-v3",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index",
+    "dev": "nodemon index",
+    "test": "npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sadewole/Crispy-v3-backend.git"
+  },
+  "keywords": [
+    "node",
+    "docker",
+    "express",
+    "heroku"
+  ],
+  "author": "Samador",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sadewole/Crispy-v3-backend/issues"
+  },
+  "homepage": "https://github.com/sadewole/Crispy-v3-backend#readme",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^1.25.1",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-validator": "^6.10.1",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.12.7",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.2",
+    "nodemailer": "^6.6.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  }
+}
