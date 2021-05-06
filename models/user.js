@@ -24,6 +24,10 @@ const userSchema = new Schema({
     type: String,
     required: true,
     default: 'CLIENT',
+    enum: {
+      values: ['CLIENT', 'ADMIN'],
+      message: '{VALUE} is not supported',
+    },
   },
 });
 
