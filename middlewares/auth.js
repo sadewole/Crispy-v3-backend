@@ -1,14 +1,9 @@
-import Token from '../utils/token';
-const checkToken = async (req, res, next) => {
+const Token = require('../utils/token');
+
+exports.checkToken = async (req, res, next) => {
   const token =
     req.query.token || req.headers['x-access-token'] || req.body.token;
-  console.log(
-    req.query.token,
-    ': ',
-    req.headers['x-access-token'],
-    ' : ',
-    req.body.token
-  );
+
   if (!token)
     return res.status(401).send({ message: 'User is not Authorized' });
   const verifiedToken = await Token.verifyToken(token);
@@ -20,4 +15,13 @@ const checkToken = async (req, res, next) => {
   return next();
 };
 
-export default checkToken;
+exports.onlyAdmin = async (req, res, next) => {
+  const { role } = req.decoded;
+  if (role !== 'ADMIN') {
+    return res.status(401).json({
+      success: false,
+      message: 'Unauthorized user. This route is for admin alone',
+    });
+  }
+  return next();
+};

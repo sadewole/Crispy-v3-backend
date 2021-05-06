@@ -28,6 +28,7 @@ module.exports = {
         email: payload.email,
         firstName: payload.firstName,
         lastName: payload.lastName,
+        role: payload.role,
       },
       process.env.JWT_SECRET,
       {
@@ -63,6 +64,7 @@ module.exports = {
             email: decoded.email,
             firstName: decoded.firstName,
             lastName: decoded.lastName,
+            role: decoded.role,
           };
         }
         return output;

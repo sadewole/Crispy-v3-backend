@@ -4,15 +4,23 @@ const bcrypt = require('bcryptjs');
 const { getToken } = require('../utils/token');
 
 module.exports = {
+  /**
+   *
+   * @param {body} req - request for body parameter(firstName, lastName, email, password, role)
+   * @param {*} res - response with the json data
+   * @returns
+   */
   async signup(req, res) {
     try {
       const errors = await validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+        return res
+          .status(400)
+          .json({ message: errors.array(), success: false });
       }
 
-      const { firstName, lastName, email, password, role } = req.body;
-
+      let { firstName, lastName, email, password, role } = req.body;
+      email = email.toLowerCase();
       let user = await User.findOne({
         email,
       });
@@ -31,7 +39,6 @@ module.exports = {
         const token = await getToken(newUser);
 
         return res.status(201).json({
-          method: 'POST',
           success: true,
           data: {
             id: newUser._id,
@@ -47,38 +54,52 @@ module.exports = {
 
       return res.status(400).json({
         message: 'User already exist',
+        success: false,
       });
     } catch (err) {
-      return res.status(400).json({ message: err });
+      if (err.name === 'ValidationError') {
+        return res.status(400).json({ message: err.message, success: false });
+      }
+      return res.status(500).json({ message: 'Server error', success: false });
     }
   },
+  /**
+   *
+   * @param {body} req - request for body parameter( email, password)
+   * @param {*} res - response with the json data
+   * @returns
+   */
   async signin(req, res) {
     try {
       const errors = await validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+        return res
+          .status(400)
+          .json({ message: errors.array(), success: false });
       }
 
-      const { email, password } = req.body;
+      let { email, password } = req.body;
+      email = email.toLowerCase();
       let userExist = await User.findOne({
         email,
       });
 
       if (!userExist)
-        return res.status(404).send({
+        return res.status(404).json({
           success: false,
-          message: 'User does not Exist! Kindly Register',
+          message: 'Incorrect Password or Email',
         });
 
       const correctPwd = await bcrypt.compare(password, userExist.password);
       if (!correctPwd)
-        return res.status(400).send({
+        return res.status(400).json({
           message: 'Incorrect Password or Email',
+          success: false,
         });
 
       const tokenCreated = await getToken(userExist);
       if (tokenCreated)
-        return res.status(200).send({
+        return res.status(201).json({
           success: true,
           data: {
             token: tokenCreated,
@@ -91,10 +112,183 @@ module.exports = {
           message: 'Successfully login',
         });
     } catch (err) {
-      return res.status(500).json({ message: err.message });
+      return res.status(500).json({ message: err.message, success: false });
     }
   },
+  /**
+   *
+   * @param {decoded} req - request for decoded parameter(id)
+   * @param {*} res - response with the json data
+   * @returns
+   */
   async fetchUser(req, res) {
-    return res.status(200).json({ message: 'Looks good here' });
+    const { id } = req.decoded;
+
+    try {
+      const userExist = await User.findById(id);
+      if (!userExist)
+        return res.status(404).json({
+          success: false,
+          message: 'No User Found',
+        });
+
+      const userDetails = {
+        id: id,
+        firstName: userExist.firstName,
+        lastName: userExist.lastName,
+        email: userExist.email,
+        role: userExist.role,
+      };
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          ...userDetails,
+        },
+        message: 'Fetched user successfully',
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Internal Server Error',
+      });
+    }
+  },
+  async fetchAllUser(req, res) {
+    try {
+      const allUser = await User.findAll({});
+      if (allUser.length > 1) {
+        return res.status(200).json({
+          success: true,
+          data: allUser,
+          message: 'Fetched all user successfully',
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: [],
+        message: 'No registered user',
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Internal Server Error',
+      });
+    }
+  },
+  async fetchSingleUser(req, res) {
+    const { id } = req.params;
+
+    try {
+      const userExist = await this.findUserById(req, res, id);
+
+      const userDetails = {
+        id: id,
+        firstName: userExist.firstName,
+        lastName: userExist.lastName,
+        email: userExist.email,
+        role: userExist.role,
+      };
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          ...userDetails,
+        },
+        message: 'Fetched user successfully',
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Internal Server Error',
+      });
+    }
+  },
+  async updateUserRole(req, res) {
+    const { id } = req.params;
+    try {
+      const { role } = req.body;
+      await this.findUserById(req, res, id);
+
+      let updatedUserRole = await User.findByIdAndUpdate(id, { role });
+      await updatedUserRole.save();
+
+      return res.status(201).json({
+        success: true,
+        data: {
+          ...userDetails,
+        },
+        message: 'Updated user successfully',
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Internal Server Error',
+      });
+    }
+  },
+  async deleteSingleUser(req, res) {
+    const { id } = req.params;
+    try {
+      await this.findUserById(req, res, id);
+
+      await User.findByIdAndDelete(id);
+
+      return res.status(201).json({
+        success: true,
+        message: 'Deleted successfully',
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Internal Server Error',
+      });
+    }
+  },
+  async multiDeleteUser(req, res) {
+    try {
+      const unknownId = [];
+      const { multiId } = req.body;
+      if (!multiId || !multiId.length) {
+        return res.status(400).json({
+          success: false,
+          message: 'multiId should not be empty',
+        });
+      }
+      for (let i = 0; i < multiId.length; i++) {
+        const userExist = await User.findById(id);
+        if (!userExist) unknownId.push(id);
+        else await User.findByIdAndDelete(id);
+      }
+
+      if (unknownId.length) {
+        return res.status(404).json({
+          success: false,
+          data: unknownId,
+          message: 'Unknown ID',
+        });
+      }
+
+      return res.status(201).json({
+        success: true,
+        message: 'Deleted successfully',
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Internal Server Error',
+      });
+    }
+  },
+  async findUserById(req, res, id) {
+    const user = await User.findById(id);
+    if (!user)
+      return res.status(404).json({
+        success: false,
+        message: 'No User Found',
+      });
+
+    return user;
   },
 };
