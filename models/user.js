@@ -29,6 +29,18 @@ const userSchema = new Schema({
       message: '{VALUE} is not supported',
     },
   },
+  profile: {
+    phone: {
+      type: String,
+    },
+    address: {
+      type: String,
+    },
+  },
+  date: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 module.exports = User = mongoose.model('User', userSchema);
