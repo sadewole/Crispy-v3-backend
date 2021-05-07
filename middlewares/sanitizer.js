@@ -14,4 +14,8 @@ module.exports = {
       check('password', 'Please enter a password').not().isEmpty(),
     ],
   },
+  mealValidate: [
+    check('name', 'Please enter food name').not().isEmpty(),
+    check('price', 'Please enter food price').not().isEmpty(),
+  ],
 };

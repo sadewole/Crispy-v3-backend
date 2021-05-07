@@ -5,6 +5,7 @@ const database = require('./database');
 
 // Routes
 const userRoutes = require('./routes/userRoute');
+const mealRoutes = require('./routes/mealRoute');
 
 database();
 const app = express();
@@ -17,7 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/', (req, res) =>
   res.json({ message: 'Yo!, welcome to crispy munch server' })
 );
-app.use('/api/v1', userRoutes);
+app.use('/api/v1', userRoutes, mealRoutes);
 
 app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Origin', '*');

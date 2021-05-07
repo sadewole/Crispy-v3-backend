@@ -7,7 +7,7 @@ exports.checkToken = async (req, res, next) => {
   if (!token)
     return res.status(401).send({ message: 'User is not Authorized' });
   const verifiedToken = await Token.verifyToken(token);
-  console.log(verifiedToken);
+
   if (!verifiedToken.success)
     return res.status(401).send({ message: 'User is not Authorized ' });
   req.decoded = verifiedToken;

@@ -19,20 +19,20 @@ router.route('/user/me').post(Auth.checkToken, userController.fetchUser);
 // Access private
 router
   .route('/user/all')
-  .post(Auth.checkToken, Auth.onlyAdmin, userController.fetchAllUser);
-
-// Routes [PUT,GET,DELETE] user
-// Access private
-router
-  .route('/user/:id')
-  .get(Auth.checkToken, userController.fetchSingleUser)
-  .put(Auth.checkToken, Auth.onlyAdmin, userController.updateUserRole)
-  .delete(Auth.checkToken, Auth.onlyAdmin, userController.deleteSingleUser);
+  .get(Auth.checkToken, Auth.onlyAdmin, userController.fetchAllUser);
 
 // Routes delete multi user
 // Access private
 router
   .route('/user/multi')
   .delete(Auth.checkToken, Auth.onlyAdmin, userController.multiDeleteUser);
+
+// Routes [PUT,GET,DELETE] user
+// Access private
+router
+  .route('/user/:id')
+  .get(Auth.checkToken, userController.fetchSingleUser)
+  .put(Auth.checkToken, Auth.onlyAdmin, userController.upgradeUserRole)
+  .delete(Auth.checkToken, Auth.onlyAdmin, userController.deleteSingleUser);
 
 module.exports = router;

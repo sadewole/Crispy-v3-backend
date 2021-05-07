@@ -2,6 +2,7 @@ const User = require('../models/user');
 const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const { getToken } = require('../utils/token');
+const { findUserById } = require('../middlewares/helpers');
 
 module.exports = {
   /**
@@ -156,8 +157,9 @@ module.exports = {
   },
   async fetchAllUser(req, res) {
     try {
-      const allUser = await User.findAll({});
-      if (allUser.length > 1) {
+      const allUser = await User.find({});
+
+      if (allUser.length) {
         return res.status(200).json({
           success: true,
           data: allUser,
@@ -181,7 +183,7 @@ module.exports = {
     const { id } = req.params;
 
     try {
-      const userExist = await this.findUserById(req, res, id);
+      const userExist = await findUserById(req, res, id);
 
       const userDetails = {
         id: id,
@@ -205,23 +207,26 @@ module.exports = {
       });
     }
   },
-  async updateUserRole(req, res) {
+  async upgradeUserRole(req, res) {
     const { id } = req.params;
     try {
-      const { role } = req.body;
-      await this.findUserById(req, res, id);
-
-      let updatedUserRole = await User.findByIdAndUpdate(id, { role });
+      await findUserById(req, res, id);
+      let updatedUserRole = await User.findByIdAndUpdate(id, { role: 'ADMIN' });
       await updatedUserRole.save();
 
       return res.status(201).json({
         success: true,
         data: {
-          ...userDetails,
+          id: updatedUserRole._id,
+          firstName: updatedUserRole.firstName,
+          lastName: updatedUserRole.lastName,
+          email: updatedUserRole.email,
+          role: updatedUserRole.role,
         },
         message: 'Updated user successfully',
       });
     } catch (err) {
+      console.log(err);
       return res.status(500).json({
         success: false,
         message: 'Internal Server Error',
@@ -231,7 +236,7 @@ module.exports = {
   async deleteSingleUser(req, res) {
     const { id } = req.params;
     try {
-      await this.findUserById(req, res, id);
+      await findUserById(req, res, id);
 
       await User.findByIdAndDelete(id);
 
@@ -257,6 +262,7 @@ module.exports = {
         });
       }
       for (let i = 0; i < multiId.length; i++) {
+        let id = multiId[i];
         const userExist = await User.findById(id);
         if (!userExist) unknownId.push(id);
         else await User.findByIdAndDelete(id);
@@ -275,20 +281,11 @@ module.exports = {
         message: 'Deleted successfully',
       });
     } catch (err) {
+      console.log(err);
       return res.status(500).json({
         success: false,
         message: 'Internal Server Error',
       });
     }
-  },
-  async findUserById(req, res, id) {
-    const user = await User.findById(id);
-    if (!user)
-      return res.status(404).json({
-        success: false,
-        message: 'No User Found',
-      });
-
-    return user;
   },
 };
