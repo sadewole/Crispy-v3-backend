@@ -10,20 +10,16 @@ module.exports = {
         return res.status(200).json({
           message: 'Order history is empty',
           success: true,
+          data: [],
         });
       }
 
-      const data = [];
+      let data = [];
       for (let i = 0; i < orders.length; i++) {
         const order = orders[i];
         const food = await Helper.findMealById(req, res, order.mealId);
         const user = await Helper.findUserById(req, res, order.userId);
-        data.push(
-          Object.assign(order, {
-            food,
-            user,
-          })
-        );
+        data = [...data, { order, food, user }];
       }
 
       return res.status(200).json({
@@ -46,18 +42,19 @@ module.exports = {
       const userId = req.decoded.id;
       quantity = Number(quantity);
       const findMenu = await Helper.findMealById(req, res, mealId);
-      const buyer = await Helper.findUserById(req, res, userId);
-
+      const buyer = await Helper.findFullUserById(req, res, userId);
       const data = await Order({
-        mealId: findMenu.id,
+        mealId: findMenu._id,
         userId,
         quantity,
         amount: quantity * findMenu.price,
         payment: false,
       });
 
+      await data.save();
+
       // add the newly created order to the actual user cart
-      buyer.carts.push(car);
+      buyer.carts.push(data);
       await buyer.save();
 
       return res.status(200).json({
@@ -77,17 +74,12 @@ module.exports = {
   getSingleOrder: async (req, res) => {
     const { id } = req.params;
     try {
-      const data = [];
+      let data = [];
       const order = await Helper.findOrderById(req, res, id);
       const food = await Helper.findMealById(req, res, order.mealId);
       const user = await Helper.findUserById(req, res, order.userId);
 
-      data.push(
-        Object.assign(order, {
-          food,
-          user,
-        })
-      );
+      data = [...data, food, user];
 
       return res.status(200).json({
         success: true,
@@ -115,16 +107,20 @@ module.exports = {
       quantity = Number(quantity);
       const findId = await Helper.findOrderById(req, res, id);
       // find meal to obtain price
-      const findMenu = await Helper.findMealById(findId.mealId);
-      const user = await Helper.findUserById(req, res, req.decoded.id);
+      const findMenu = await Helper.findMealById(req, res, findId.mealId);
+      const user = await Helper.findFullUserById(req, res, req.decoded.id);
 
-      const data = await Order.findByIdAndUpdate(id, {
-        quantity,
-        amount: quantity * findMenu.price,
-      });
+      const data = await Order.findByIdAndUpdate(
+        id,
+        {
+          quantity,
+          amount: quantity * findMenu.price,
+        },
+        { new: true }
+      );
       // find order in user cart and make update
       const findIndex = user.carts.findIndex((cart) => cart.id === id);
-      user.cart.splice(findIndex, 1, data);
+      user.carts.splice(findIndex, 1, data);
       await user.save();
 
       return res.status(200).json({
@@ -133,7 +129,8 @@ module.exports = {
         data,
       });
     } catch (err) {
-      res.status(500).json({
+      console.log(err);
+      return res.status(500).json({
         message: 'Internal server error',
         success: false,
       });
@@ -145,18 +142,26 @@ module.exports = {
     try {
       await Helper.findOrderById(req, res, id);
 
-      await Order.findByIdAndDelete(id);
-      const user = await Helper.findUserById(req, res, userId);
+      const user = await Helper.findFullUserById(req, res, userId);
 
       // remove the newly deleted order from the user cart
-      user.carts.filter((cart) => cart._id !== id);
-      await user.save();
+      if (user.carts.filter((cart) => cart.toString() === id).length > 0) {
+        const removeIndex = user.carts.map((cart) =>
+          cart.toString().indexOf(id)
+        );
+        await user.carts.splice(removeIndex, 1);
+
+        await user.save();
+      }
+      // delete order
+      await Order.findByIdAndDelete(id);
 
       return res.status(200).json({
         success: true,
         message: 'Order Deleted successfully',
       });
     } catch (err) {
+      console.log(err);
       res.status(500).json({
         message: 'Internal server error',
         success: false,
@@ -167,16 +172,18 @@ module.exports = {
     const userId = req.decoded.id;
     try {
       let orders = [];
-      const user = await Helper.findUserById(req, res, userId);
-      const carts = user.populate('carts');
-
+      const user = await Helper.findFullUserById(req, res, userId);
+      let carts = user.carts;
       // update the newly paid user order
       for (let i = 0; i < carts.length; i++) {
-        const cart = carts[i];
-        const order = await Order.findByIdAndUpdate(cart._id, {
-          payment: true,
-        });
-        await order.save();
+        const cartId = carts[i];
+        const order = await Order.findByIdAndUpdate(
+          cartId,
+          {
+            payment: true,
+          },
+          { new: true }
+        );
 
         orders.push(order);
       }
@@ -186,7 +193,7 @@ module.exports = {
       });
       await payment.save();
 
-      // empty the user cart and add payment to user order history
+      // // empty the user cart and add payment to user order history
       user.carts = [];
       user.payments.push(payment);
       await user.save();
@@ -196,7 +203,8 @@ module.exports = {
         message: 'Payment successful',
       });
     } catch (err) {
-      res.status(500).json({
+      console.log(err);
+      return res.status(500).json({
         message: 'Internal server error',
         success: false,
       });
@@ -213,9 +221,20 @@ module.exports = {
         });
       }
 
-      await Payment.findByIdAndUpdate(id, {
-        deliveredDate: req.body.deliveredDate,
-        status: req.body.status,
+      const newPayment = await Payment.findByIdAndUpdate(
+        id,
+        {
+          deliveredDate: req.body.deliveredDate,
+          status: req.body.status,
+        },
+        { new: true }
+      );
+      await newPayment.save();
+
+      return res.status(200).json({
+        success: true,
+        message: 'Payment updated successful',
+        data: newPayment,
       });
     } catch (err) {
       res.status(500).json({
@@ -250,10 +269,11 @@ module.exports = {
   async fetchAllPaymentHistories(req, res) {
     try {
       const data = await Payment.find({});
-      if (data.length < 1) {
+      if (!data || data.length < 1) {
         return res.status(200).json({
           message: 'Payment history is empty',
           success: true,
+          data: [],
         });
       }
 
@@ -263,6 +283,7 @@ module.exports = {
         data,
       });
     } catch (err) {
+      console.log(err);
       return res.status(500).json({
         success: false,
         message: 'Internal Server Error',

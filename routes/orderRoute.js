@@ -10,18 +10,10 @@ router
   .get(Auth.checkToken, Auth.onlyAdmin, orderController.getAllOrder)
   .post(Auth.checkToken, sanitizer.orderValidate, orderController.addNewOrder);
 
-// Routes [PUT,GET,DELETE] order by params
-// Access private
-router
-  .route('/order/:id')
-  .get(orderController.getSingleOrder)
-  .put(Auth.checkToken, orderController.updateQuantity)
-  .delete(Auth.checkToken, orderController.deleteOrder);
-
 /** PAYMENT */
 
 // Routes [POST,GET] payment
-// Access private
+// Access private by ADMIN
 router
   .route('/order/payment')
   .get(
@@ -41,5 +33,15 @@ router
     orderController.fetchSingleOrderDelivery
   )
   .put(Auth.checkToken, Auth.onlyAdmin, orderController.updateOrderDelivery);
+
+/** --> payment  end */
+
+// Routes [PUT,GET,DELETE] order by params
+// Access private
+router
+  .route('/order/:id')
+  .get(orderController.getSingleOrder)
+  .put(Auth.checkToken, orderController.updateQuantity)
+  .delete(Auth.checkToken, orderController.deleteOrder);
 
 module.exports = router;

@@ -1,8 +1,9 @@
 const User = require('../models/user');
+const Order = require('../models/order');
 const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const { getToken } = require('../utils/token');
-const { findUserById } = require('../middlewares/helpers');
+const { findUserById, findFullUserById } = require('../middlewares/helpers');
 
 module.exports = {
   /**
@@ -126,7 +127,7 @@ module.exports = {
     const { id } = req.decoded;
 
     try {
-      const data = await findUserById(req, res, id).select('-password');
+      const data = await findFullUserById(req, res, id);
 
       return res.status(200).json({
         success: true,
@@ -134,6 +135,7 @@ module.exports = {
         message: 'Fetched user successfully',
       });
     } catch (err) {
+      console.log(err);
       return res.status(500).json({
         success: false,
         message: 'Internal Server Error',
@@ -197,7 +199,11 @@ module.exports = {
     const { id } = req.params;
     try {
       await findUserById(req, res, id);
-      let updatedUserRole = await User.findByIdAndUpdate(id, { role: 'ADMIN' });
+      let updatedUserRole = await User.findByIdAndUpdate(
+        id,
+        { role: 'ADMIN' },
+        { new: true }
+      );
       await updatedUserRole.save();
 
       return res.status(201).json({
@@ -226,6 +232,8 @@ module.exports = {
       await findUserById(req, res, id);
 
       await User.findByIdAndDelete(id);
+      const order = await Order.findOne({ userId: id });
+      await order.remove();
 
       return res.status(201).json({
         success: true,
@@ -252,7 +260,11 @@ module.exports = {
         let id = multiId[i];
         const userExist = await User.findById(id);
         if (!userExist) unknownId.push(id);
-        else await User.findByIdAndDelete(id);
+        else {
+          await User.findByIdAndDelete(id);
+          const order = await Order.findOne({ userId: id });
+          await order.remove();
+        }
       }
 
       if (unknownId.length) {
@@ -276,15 +288,14 @@ module.exports = {
     }
   },
   async fetchUserCart(req, res) {
-    const { id } = req.params;
+    const { id } = req.decoded;
     try {
-      const user = await findUserById(req, res, id);
-      const data = await user.populate('carts');
+      const data = await User.findById(id).populate('carts');
 
       return res.status(200).json({
         success: true,
         message: 'Fetched successfully',
-        data,
+        data: data.carts,
       });
     } catch (err) {
       return res.status(500).json({
@@ -294,13 +305,14 @@ module.exports = {
     }
   },
   async fetchUserPaymentHistory(req, res) {
+    const { id } = req.decoded;
     try {
-      const data = await User.find({}).populate('payments');
+      const data = await User.findById(id).populate('payments');
 
       return res.status(200).json({
         success: true,
         message: 'Fetched successfully',
-        data,
+        data: data.payments,
       });
     } catch (err) {
       return res.status(500).json({

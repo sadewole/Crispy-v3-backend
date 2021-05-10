@@ -91,15 +91,20 @@ module.exports = {
       }
 
       const returnImage = await cloudinary.uploader.upload(image);
-
-      const data = await Meal.findByIdAndUpdate(id, {
-        name: req.body.name || oldData.name,
-        price: req.body.price || oldData.price,
-        image: returnImage.secure_url || oldData.image,
-        available: req.body.available || oldData.available,
-      });
+      const data = await Meal.findByIdAndUpdate(
+        id,
+        {
+          name: req.body.name || oldData.name,
+          price: req.body.price || oldData.price,
+          image: returnImage.secure_url || oldData.image,
+          available: req.body.available || oldData.available,
+        },
+        { new: true }
+      );
 
       await data.save();
+
+      console.log(data);
 
       return res.status(201).json({
         success: true,
@@ -108,6 +113,7 @@ module.exports = {
         data,
       });
     } catch (err) {
+      console.log(err);
       return res.status(500).json({
         success: false,
         message: 'Internal Server Error',

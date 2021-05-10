@@ -1,11 +1,11 @@
 const { Schema, model } = require('mongoose');
 
 const order = new Schema({
-  user: {
+  userId: {
     type: Schema.Types.ObjectId,
     ref: 'user',
   },
-  meal: {
+  mealId: {
     type: Schema.Types.ObjectId,
     ref: 'meal',
   },
