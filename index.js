@@ -6,7 +6,7 @@ const database = require('./database');
 // Routes
 const userRoutes = require('./routes/userRoute');
 const mealRoutes = require('./routes/mealRoute');
-const orderRoutes = require('./routes/orderRoutes');
+const orderRoutes = require('./routes/orderRoute');
 
 database();
 const app = express();

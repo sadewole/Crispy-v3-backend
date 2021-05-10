@@ -247,9 +247,15 @@ module.exports = {
       });
     }
   },
-  async fetchAllOrderHistories(req, res) {
+  async fetchAllPaymentHistories(req, res) {
     try {
-      const data = await User.find({}).populate('payments');
+      const data = await Payment.find({});
+      if (data.length < 1) {
+        return res.status(200).json({
+          message: 'Payment history is empty',
+          success: true,
+        });
+      }
 
       return res.status(200).json({
         success: true,

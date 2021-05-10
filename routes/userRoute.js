@@ -45,6 +45,6 @@ router
 // Access private
 router
   .route('/user/:id/order_history')
-  .get(Auth.checkToken, userController.fetchOrderHistory);
+  .get(Auth.checkToken, userController.fetchUserPaymentHistory);
 
 module.exports = router;

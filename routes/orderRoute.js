@@ -17,14 +17,21 @@ router
   .put(Auth.checkToken, orderController.updateQuantity)
   .delete(Auth.checkToken, orderController.deleteOrder);
 
-// Payment
-// Routes [POST,GET] order by params
+/** PAYMENT */
+
+// Routes [POST,GET] payment
 // Access private
 router
   .route('/order/payment')
-  .get(Auth.checkToken, Auth.onlyAdmin, orderController.fetchAllOrderHistories)
+  .get(
+    Auth.checkToken,
+    Auth.onlyAdmin,
+    orderController.fetchAllPaymentHistories
+  )
   .post(Auth.checkToken, orderController.userOrderPayment);
 
+// Routes [PUT,GET] order by params
+// Access private
 router
   .route('/order/payment/:id')
   .get(

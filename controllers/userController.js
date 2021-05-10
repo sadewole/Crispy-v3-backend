@@ -293,4 +293,20 @@ module.exports = {
       });
     }
   },
+  async fetchUserPaymentHistory(req, res) {
+    try {
+      const data = await User.find({}).populate('payments');
+
+      return res.status(200).json({
+        success: true,
+        message: 'Fetched successfully',
+        data,
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Internal Server Error',
+      });
+    }
+  },
 };
