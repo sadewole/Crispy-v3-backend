@@ -1,0 +1,20 @@
+version: '3.4'
+
+services:
+  crispyv3backend:
+    image: crispyv3backend
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      env_file: .env
+    environment:
+      NODE_ENV: production
+      mongoURI: $mongoURI
+      CLOUDINARY_API_KEY: $CLOUDINARY_API_KEY
+      CLOUDINARY_NAME: $CLOUDINARY_NAME
+      CLOUDINARY_SECRET_KEY: $CLOUDINARY_SECRET_KEY
+      JWT_SECRET: $JWT_SECRET
+      Admin_Email: $Admin_Email
+      Admin_Password: $Admin_Password
+    ports:
+      - 5500:5500
