@@ -13,6 +13,10 @@ module.exports = {
       check('email', 'Please enter a valid email').isEmail(),
       check('password', 'Please enter a password').not().isEmpty(),
     ],
+    profile: [
+      check('phone', 'Phone number is required').isEmail(),
+      check('address', 'Address is required').not().isEmpty(),
+    ],
   },
   mealValidate: [
     check('name', 'Please enter food name').not().isEmpty(),

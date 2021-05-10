@@ -37,6 +37,16 @@ router
   .route('/user/payment_history')
   .get(Auth.checkToken, userController.fetchUserPaymentHistory);
 
+// Routes POST  user profile
+// Access private
+router
+  .route('/user/profile')
+  .post(
+    Auth.checkToken,
+    sanitizer.auth.profile,
+    userController.updateUserProfile
+  );
+
 // Routes [PUT,GET,DELETE] user by params
 // Access private
 router

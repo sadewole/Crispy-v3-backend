@@ -321,4 +321,26 @@ module.exports = {
       });
     }
   },
+  async updateUserProfile(req, res) {
+    try {
+      let profileFields = { address: req.body.address, phone: req.body.phone };
+      // Using upsert option (creates new doc if no match is found):
+      const user = await User.findByIdAndUpdate(
+        req.decoded.id,
+        { profile: profileFields },
+        { new: true, upsert: true, setDefaultsOnInsert: true }
+      ).select('-password');
+
+      return res.status(201).json({
+        success: true,
+        message: 'Profile saved successfully',
+        data: user,
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Internal Server Error',
+      });
+    }
+  },
 };
