@@ -18,4 +18,8 @@ module.exports = {
     check('name', 'Please enter food name').not().isEmpty(),
     check('price', 'Please enter food price').not().isEmpty(),
   ],
+  orderValidate: [
+    check('mealId', 'Must not be empty').not().isEmpty(),
+    check('quantity', 'Must not be empty').not().isEmpty(),
+  ],
 };

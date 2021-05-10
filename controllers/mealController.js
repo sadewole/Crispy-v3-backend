@@ -29,6 +29,7 @@ module.exports = {
   },
   async addMeal(req, res) {
     let { name, price, available } = req.body;
+    price = Number(price);
     try {
       let image = null;
       if (!req.file) {
