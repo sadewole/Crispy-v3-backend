@@ -27,12 +27,24 @@ router
   .route('/user/multi')
   .delete(Auth.checkToken, Auth.onlyAdmin, userController.multiDeleteUser);
 
-// Routes [PUT,GET,DELETE] user
+// Routes [PUT,GET,DELETE] user by params
 // Access private
 router
   .route('/user/:id')
   .get(Auth.checkToken, userController.fetchSingleUser)
   .put(Auth.checkToken, Auth.onlyAdmin, userController.upgradeUserRole)
   .delete(Auth.checkToken, Auth.onlyAdmin, userController.deleteSingleUser);
+
+// Routes GET user cart by params
+// Access private
+router
+  .route('/user/:id/cart')
+  .get(Auth.checkToken, userController.fetchUserCart);
+
+// Routes GET user order history by params
+// Access private
+router
+  .route('/user/:id/order_history')
+  .get(Auth.checkToken, userController.fetchOrderHistory);
 
 module.exports = router;

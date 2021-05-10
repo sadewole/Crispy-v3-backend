@@ -4,7 +4,7 @@ const uploads = require('../middlewares/multer');
 const sanitizer = require('../middlewares/sanitizer');
 const Auth = require('../middlewares/auth');
 
-// Routes [post, get] meal
+// Routes [POST, GET] meal
 // Access public
 router
   .route('/meal')
@@ -17,8 +17,10 @@ router
     mealController.addMeal
   );
 
+// Routes [PUT,GET,DELETE] meal by params
+// Access private to admin
 router
-  .route('/menu/:id')
+  .route('/meal/:id')
   .get(Auth.checkToken, Auth.onlyAdmin, mealController.getSingleFood)
   .put(
     Auth.checkToken,

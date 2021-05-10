@@ -1,5 +1,5 @@
 const Order = require('../models/order');
-const User = require('../models/user');
+const Payment = require('../models/payment');
 const Helper = require('../middlewares/helpers');
 
 module.exports = {
@@ -34,17 +34,17 @@ module.exports = {
     } catch (err) {
       console.log(err);
       return res.status(500).json({
-        message: err,
+        message: 'Internal server error',
         success: false,
       });
     }
   },
 
   addNewOrder: async (req, res) => {
-    const { mealId, quantity } = req.body;
+    let { mealId, quantity } = req.body;
     try {
-      const userId = req.user.id;
-
+      const userId = req.decoded.id;
+      quantity = Number(quantity);
       const findMenu = await Helper.findMealById(req, res, mealId);
       const buyer = await Helper.findUserById(req, res, userId);
 
@@ -52,7 +52,7 @@ module.exports = {
         mealId: findMenu.id,
         userId,
         quantity,
-        amount: quantity * Number(findMenu.price),
+        amount: quantity * findMenu.price,
         payment: false,
       });
 
@@ -68,7 +68,7 @@ module.exports = {
     } catch (err) {
       console.log(err);
       res.status(500).json({
-        message: err,
+        message: 'Internal server error',
         success: false,
       });
     }
@@ -96,50 +96,52 @@ module.exports = {
       });
     } catch (err) {
       res.status(500).json({
-        message: err,
+        message: 'Internal server error',
         success: false,
       });
     }
   },
 
-  //   updateQuantity: async (req, res) => {
-  //     const { id } = req.params;
-  //     let quantity = req.body.quantity;
-  //     try {
-  //       if (!quantity) {
-  //         return res.status(400).json({
-  //           message: 'Field must not be empty',
-  //           success: false
-  //         });
-  //       }
-  //       quantity = Number(quantity)
-  //       const findId = await Helper.findOrderById(req, res, id);
-  //       // find meal to obtain price
-  //       const findMenu = await Helper.findMealById(findId.mealId);
-  //        const user = await Helper.findUserById(req, res, order.userId);
+  updateQuantity: async (req, res) => {
+    const { id } = req.params;
+    let quantity = req.body.quantity;
+    try {
+      if (!quantity) {
+        return res.status(400).json({
+          message: 'Field must not be empty',
+          success: false,
+        });
+      }
+      quantity = Number(quantity);
+      const findId = await Helper.findOrderById(req, res, id);
+      // find meal to obtain price
+      const findMenu = await Helper.findMealById(findId.mealId);
+      const user = await Helper.findUserById(req, res, req.decoded.id);
 
-  //       const data = await Order.findByIdAndUpdate(id,
-  //         {
-  //           quantity,
-  //           amount: quantity * findMenu.price,
-  //         }
-  //       );
+      const data = await Order.findByIdAndUpdate(id, {
+        quantity,
+        amount: quantity * findMenu.price,
+      });
+      // find order in user cart and make update
+      const findIndex = user.carts.findIndex((cart) => cart.id === id);
+      user.cart.splice(findIndex, 1, data);
+      await user.save();
 
-  //       return res.status(200).json({
-  //         success: true,
-  //         message: 'Order updated successfully',
-  //         data,
-  //       });
-  //     } catch (err) {
-  //       res.status(400).json({
-  //         message: err,
-  //         success: false
-  //       });
-  //     }
-  //   },
+      return res.status(200).json({
+        success: true,
+        message: 'Order updated successfully',
+        data,
+      });
+    } catch (err) {
+      res.status(500).json({
+        message: 'Internal server error',
+        success: false,
+      });
+    }
+  },
   deleteOrder: async (req, res) => {
     const { id } = req.params;
-    const userId = req.user.id;
+    const userId = req.decoded.id;
     try {
       await Helper.findOrderById(req, res, id);
 
@@ -155,9 +157,109 @@ module.exports = {
         message: 'Order Deleted successfully',
       });
     } catch (err) {
-      res.status(400).json({
-        message: err,
+      res.status(500).json({
+        message: 'Internal server error',
         success: false,
+      });
+    }
+  },
+  userOrderPayment: async (req, res) => {
+    const userId = req.decoded.id;
+    try {
+      let orders = [];
+      const user = await Helper.findUserById(req, res, userId);
+      const carts = user.populate('carts');
+
+      // update the newly paid user order
+      for (let i = 0; i < carts.length; i++) {
+        const cart = carts[i];
+        const order = await Order.findByIdAndUpdate(cart._id, {
+          payment: true,
+        });
+        await order.save();
+
+        orders.push(order);
+      }
+      // save order payments
+      const payment = await Payment({
+        orders,
+      });
+      await payment.save();
+
+      // empty the user cart and add payment to user order history
+      user.carts = [];
+      user.payments.push(payment);
+      await user.save();
+
+      return res.status(200).json({
+        success: true,
+        message: 'Payment successful',
+      });
+    } catch (err) {
+      res.status(500).json({
+        message: 'Internal server error',
+        success: false,
+      });
+    }
+  },
+  async updateOrderDelivery(req, res) {
+    const { id } = req.params;
+    try {
+      const findPayment = await Payment.findById(id);
+      if (!findPayment) {
+        return res.status(404).json({
+          success: false,
+          message: 'Not found',
+        });
+      }
+
+      await Payment.findByIdAndUpdate(id, {
+        deliveredDate: req.body.deliveredDate,
+        status: req.body.status,
+      });
+    } catch (err) {
+      res.status(500).json({
+        message: 'Internal server error',
+        success: false,
+      });
+    }
+  },
+  async fetchSingleOrderDelivery(req, res) {
+    const { id } = req.params;
+    try {
+      const data = await Payment.findById(id);
+      if (!data) {
+        return res.status(404).json({
+          success: false,
+          message: 'Not found',
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Fetched successfully',
+        data,
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Internal Server Error',
+      });
+    }
+  },
+  async fetchAllOrderHistories(req, res) {
+    try {
+      const data = await User.find({}).populate('payments');
+
+      return res.status(200).json({
+        success: true,
+        message: 'Fetched successfully',
+        data,
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Internal Server Error',
       });
     }
   },

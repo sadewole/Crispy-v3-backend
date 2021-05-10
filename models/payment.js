@@ -3,6 +3,7 @@ const { Schema, model } = require('mongoose');
 const payment = new Schema({
   paymentDate: {
     type: Date,
+    default: Date.now,
   },
   deliveredDate: {
     type: Date,

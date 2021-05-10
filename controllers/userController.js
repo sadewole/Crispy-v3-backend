@@ -126,26 +126,11 @@ module.exports = {
     const { id } = req.decoded;
 
     try {
-      const userExist = await User.findById(id);
-      if (!userExist)
-        return res.status(404).json({
-          success: false,
-          message: 'No User Found',
-        });
-
-      const userDetails = {
-        id: id,
-        firstName: userExist.firstName,
-        lastName: userExist.lastName,
-        email: userExist.email,
-        role: userExist.role,
-      };
+      const data = await findUserById(req, res, id).select('-password');
 
       return res.status(200).json({
         success: true,
-        data: {
-          ...userDetails,
-        },
+        data,
         message: 'Fetched user successfully',
       });
     } catch (err) {
@@ -191,6 +176,7 @@ module.exports = {
         lastName: userExist.lastName,
         email: userExist.email,
         role: userExist.role,
+        profile: userExist.profile,
       };
 
       return res.status(200).json({
@@ -222,6 +208,7 @@ module.exports = {
           lastName: updatedUserRole.lastName,
           email: updatedUserRole.email,
           role: updatedUserRole.role,
+          profile: updatedUserRole.profile,
         },
         message: 'Updated user successfully',
       });
@@ -282,6 +269,24 @@ module.exports = {
       });
     } catch (err) {
       console.log(err);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal Server Error',
+      });
+    }
+  },
+  async fetchUserCart(req, res) {
+    const { id } = req.params;
+    try {
+      const user = await findUserById(req, res, id);
+      const data = await user.populate('carts');
+
+      return res.status(200).json({
+        success: true,
+        message: 'Fetched successfully',
+        data,
+      });
+    } catch (err) {
       return res.status(500).json({
         success: false,
         message: 'Internal Server Error',
