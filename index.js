@@ -3,6 +3,9 @@ const logger = require('morgan');
 const cors = require('cors');
 const database = require('./database');
 
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./swagger.json');
+
 // Routes
 const userRoutes = require('./routes/userRoute');
 const mealRoutes = require('./routes/mealRoute');
@@ -31,5 +34,7 @@ app.use(function (req, res, next) {
 });
 
 const PORT = process.env.PORT || 5500;
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.listen(PORT, () => console.log('Running on PORT:::', PORT));
