@@ -41,6 +41,18 @@ const userSchema = new Schema({
     type: Date,
     default: Date.now,
   },
+  carts: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'order',
+    },
+  ],
+  payments: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'payment',
+    },
+  ],
 });
 
 module.exports = User = mongoose.model('User', userSchema);

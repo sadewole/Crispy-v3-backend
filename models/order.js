@@ -5,9 +5,9 @@ const order = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'user',
   },
-  menu: {
+  meal: {
     type: Schema.Types.ObjectId,
-    ref: 'menu',
+    ref: 'meal',
   },
   quantity: {
     type: Number,
@@ -17,23 +17,9 @@ const order = new Schema({
     type: Number,
     required: true,
   },
-  orderedDate: {
-    type: Date,
-  },
-  deliveredDate: {
-    type: Date,
-  },
-  status: {
-    type: String,
-    default: 'processing',
-    enum: {
-      values: ['processing', 'delivered'],
-      message: '{VALUE} is not supported',
-    },
-  },
   payment: {
     type: Boolean,
-    default: false,
+    required: true,
   },
 });
 
