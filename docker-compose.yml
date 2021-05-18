@@ -16,5 +16,6 @@ services:
       JWT_SECRET: $JWT_SECRET
       Admin_Email: $Admin_Email
       Admin_Password: $Admin_Password
+      PORT: $PORT
     ports:
       - 5500:5500
