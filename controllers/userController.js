@@ -3,7 +3,11 @@ const Order = require('../models/order');
 const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const { getToken } = require('../utils/token');
-const { findUserById, findFullUserById } = require('../middlewares/helpers');
+const {
+  findUserById,
+  findFullUserById,
+  findMealById,
+} = require('../middlewares/helpers');
 
 module.exports = {
   /**
@@ -292,10 +296,17 @@ module.exports = {
     try {
       const data = await User.findById(id).populate('carts');
 
+      let cartList = [];
+      for (let i = 0; i < data.carts.length; i++) {
+        const carts = data.carts[i];
+        const food = await Helper.findMealById(req, res, carts.mealId);
+        cartList = [...cartList, { data, food }];
+      }
+
       return res.status(200).json({
         success: true,
         message: 'Fetched successfully',
-        data: data.carts,
+        data: cartList,
       });
     } catch (err) {
       return res.status(500).json({
