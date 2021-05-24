@@ -300,7 +300,7 @@ module.exports = {
       for (let i = 0; i < data.carts.length; i++) {
         const carts = data.carts[i];
         const food = await findMealById(req, res, carts.mealId);
-        cartList = [...cartList, { carts, food }];
+        cartList = [...cartList, { cart, food }];
       }
 
       return res.status(200).json({
