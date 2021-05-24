@@ -299,8 +299,8 @@ module.exports = {
       let cartList = [];
       for (let i = 0; i < data.carts.length; i++) {
         const carts = data.carts[i];
-        const food = await Helper.findMealById(req, res, carts.mealId);
-        cartList = [...cartList, { data, food }];
+        const food = await findMealById(req, res, carts.mealId);
+        cartList = [...cartList, { carts, food }];
       }
 
       return res.status(200).json({
@@ -309,6 +309,7 @@ module.exports = {
         data: cartList,
       });
     } catch (err) {
+      console.log(err);
       return res.status(500).json({
         success: false,
         message: 'Internal Server Error',
