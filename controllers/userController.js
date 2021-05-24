@@ -298,7 +298,7 @@ module.exports = {
 
       let cartList = [];
       for (let i = 0; i < data.carts.length; i++) {
-        const carts = data.carts[i];
+        const cart = data.carts[i];
         const food = await findMealById(req, res, carts.mealId);
         cartList = [...cartList, { cart, food }];
       }
