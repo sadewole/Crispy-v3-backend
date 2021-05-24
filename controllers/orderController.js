@@ -126,7 +126,10 @@ module.exports = {
       return res.status(200).json({
         success: true,
         message: 'Order updated successfully',
-        data,
+        data: {
+          cart: data,
+          food: findMenu,
+        },
       });
     } catch (err) {
       console.log(err);
