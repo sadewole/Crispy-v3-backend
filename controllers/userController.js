@@ -333,6 +333,23 @@ module.exports = {
       });
     }
   },
+  async fetchUserProfile(req, res) {
+    const { id } = req.decoded;
+    try {
+      const data = await User.findById(id);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Fetched successfully',
+        data: data.profile,
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Internal Server Error',
+      });
+    }
+  },
   async updateUserProfile(req, res) {
     try {
       let profileFields = { address: req.body.address, phone: req.body.phone };

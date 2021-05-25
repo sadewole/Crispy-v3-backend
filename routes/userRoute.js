@@ -41,6 +41,7 @@ router
 // Access private
 router
   .route('/user/profile')
+  .get(Auth.checkToken, userController.fetchUserProfile)
   .post(
     Auth.checkToken,
     sanitizer.auth.profile,
