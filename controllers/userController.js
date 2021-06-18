@@ -320,13 +320,43 @@ module.exports = {
     const { id } = req.decoded;
     try {
       const data = await User.findById(id).populate('payments');
+      /**
+       * if this codes doesn't make sense. I'm sorry about that.
+       *
+       * The code is to find mealId of every order made during payment.
+       *  `Map & forEach` wasn't helping. So i used for loop.
+       */
+      let paymentHistoryList = [];
+      for (let i = 0; i < data.payments.length; i++) {
+        const payments = data.payments[i];
+        const orders = payments.orders;
+        let orderNewList = [];
+        for (let j = 0; j < orders.length; j++) {
+          const order = orders[j];
+          if (order !== null) {
+            // find the order-mealId
+            const food = await findMealById(req, res, order.mealId);
+
+            orderNewList = [...orderNewList, { order, food }];
+          }
+        }
+        // Update the payment list
+        const newPayment = {
+          id: payments._id,
+          status: payments.status,
+          paymentDate: payments.paymentDate,
+          orders: orderNewList,
+        };
+        paymentHistoryList = [...paymentHistoryList, { ...newPayment }];
+      }
 
       return res.status(200).json({
         success: true,
         message: 'Fetched successfully',
-        data: data.payments,
+        data: paymentHistoryList,
       });
     } catch (err) {
+      console.log(err);
       return res.status(500).json({
         success: false,
         message: 'Internal Server Error',
