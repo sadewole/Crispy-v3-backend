@@ -12,6 +12,11 @@ Kindly note that i may not be accepting any PR from anyone.
 
 --
 
+### 2023
+Change server host from heroku to render - https://crispy-munch-backend.onrender.com/
+
+--
+
 It's a simple backend made with love. You can pull/fork the repo for your own use.
 
 And please show some love by adding a star to this repo.
